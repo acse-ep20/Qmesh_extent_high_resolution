@@ -22,12 +22,14 @@ import Qmesh_extent_high_resolution.raster
 import Qmesh_extent_high_resolution.mesh
 import Qmesh_extent_high_resolution.publish
 import Qmesh_extent_high_resolution.lib
+import Qmesh_extent_high_resolution.contour
+
 from Qmesh_extent_high_resolution.config import *
 
 import pkg_resources
 #Set the version attribute
 try:
-    __packaged_distro__ = pkg_resources.get_distribution('Qmesh_extent_high_resolution')
+    __packaged_distro__ = pkg_resources.get_distribution('qmesh3')
     __version__ = __packaged_distro__.version
 except (pkg_resources.DistributionNotFound, AttributeError):
     __version__ = None
