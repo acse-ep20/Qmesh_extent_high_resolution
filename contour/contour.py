@@ -261,24 +261,93 @@ class Contour(object):
         self.saving_a_layer(temp_layer, self.target_unenclosed_filename)
         return short_features
     
-    # def connect_manual_boundary_to_natural_boundary(self):
-    #     """
-    #     this function connects the manual boundary to natural boundary
-    #     """
-    #     feature_ids = []
-    #     for feature in self.unenclosed_layer.getFeatures():
-    #         feature_ids.append(feature.id())
-    #     for feature in self.enclosed_layer.getFeatures():
-    #         if feature.id() not in feature_ids:
-    #             # usually, manual boundary is a connected feature
-    #             manual_boundary_id = feature.id()
-    #             break
-    #     manual_boundary = self.enclosed_layer.select(manual_boundary_id)
-    #     print(manual_boundary.geom.w)
-    #     first_point = manual_boundary.ge
-
-    def simplify_the_feature(self, extent, points_per_group=20, overlapping_points=19, num_modes=2):
+    def check_connect_manual_boundary_to_natural_boundary(self):
+        """
+        this function connects the manual boundary to natural boundary
+        0 first first
+        1 represents natural first manual last
+        2 represents natural last and manual last
+        3 represents natural last and manual first
+        """
+        feature_ids = []
+        for feature in self.unenclosed_layer.getFeatures():
+            feature_ids.append(feature.id())
+        for feature in self.enclosed_layer.getFeatures():
+            if feature.id() not in feature_ids:
+                # usually, manual boundary is a connected feature
+                manual_boundary_id = feature.id()
+                break
+        request = QgsFeatureRequest()
+        request.setFilterFid(manual_boundary_id)
+        features = self.enclosed_layer.getFeatures(request)
+        for feature in features:
+            geom = feature.geometry()
+            if geom.wkbType() == QgsWkbTypes.MultiLineString:
+                temp_lines = geom.asMultiPolyline()
+                first = temp_lines[0][0]
+                last = temp_lines[-1][-1]
         
+        # now find the corresponding point
+        request = QgsFeatureRequest()
+        request.setFilterFids(self.unenclosed_features_list)
+        features = self.enclosed_layer.getFeatures(request)
+        for feature in features:
+            natural_boundary = feature
+            geom = feature.geometry()
+            if geom.wkbType() == QgsWkbTypes.MultiLineString:
+                temp_lines = geom.asMultiPolyline()
+                first_natural = temp_lines[0][0]
+                last_natural = temp_lines[-1][-1]
+        # 
+        if first_natural.compare(first):
+            return 0, 0, manual_boundary_id
+        elif first_natural.compare(last):
+            return 0, -1, manual_boundary_id
+        else:
+            raise("Boundary is not closed!!")
+            
+    def connect_the_boundary(self, index_natural, index_manual, manual_id):
+        """
+        this function connects the boundary
+        """
+        request = QgsFeatureRequest()
+        request.setFilterFids(self.unenclosed_features_list)
+        features = self.enclosed_layer.getFeatures(request)
+        for feature in features:
+            natural_boundary = feature
+            geom = feature.geometry()
+            if geom.wkbType() == QgsWkbTypes.MultiLineString:
+                print(1)
+                temp_lines = geom.asMultiPolyline()
+                first_natural = temp_lines[0][0]
+                last_natural = temp_lines[-1][-1]
+            elif geom.wkbType()==QgsWkbTypes.LineString:
+                temp_line = geom.asPolyline()
+                first_natural = temp_line[0]
+                last_natural = temp_line[-1]
+        request = QgsFeatureRequest()
+        request.setFilterFid(manual_id)
+        features = self.enclosed_layer.getFeatures(request)
+        for feature in features:
+            points = []
+            natural_boundary = feature
+            geom = feature.geometry()
+            if geom.wkbType() == QgsWkbTypes.MultiLineString:
+                temp_lines = geom.asMultiPolyline()
+                for t in temp_lines:
+                    points += t
+        if index_natural == 0 and index_manual == 0:
+            points[0] = first_natural
+            points[-1] = last_natural
+        if index_natural == 0 and index_manual == -1:
+            points[0] = last_natural
+            points[-1] = first_natural
+        self.enclosed_layer.dataProvider().changeGeometryValues({manual_id: QgsGeometry.fromPolylineXY(points)})
+        
+
+        
+    def simplify_the_feature(self, extent, points_per_group=20, overlapping_points=19, num_modes=2):
+        index_natural, index_manual, manual_id = self.check_connect_manual_boundary_to_natural_boundary()
         xiMin, xiMax, etaMin, etaMax = extent
         unenclosed_layer = self.unenclosed_layer
         manipulated_features = unenclosed_layer.getFeatures()
@@ -326,15 +395,15 @@ class Contour(object):
                             unenclosed_layer.dataProvider().changeGeometryValues({feature.id(): smoothed_line})
 
 
-        enclosed_layer = self.enclosed_layer
         manipulated_features = unenclosed_layer.getFeatures()
         for feature in manipulated_features:
-            enclosed_layer.dataProvider().changeGeometryValues({feature.id():feature.geometry()})
+            self.enclosed_layer.dataProvider().changeGeometryValues({feature.id():feature.geometry()})
 
         deleted_id = self.delete_unnecessary_feature_for_unenclose(unenclosed_layer,  points_per_group * 3, extent)
-        caps = enclosed_layer.dataProvider().capabilities()
+        caps = self.enclosed_layer.dataProvider().capabilities()
         # Check if a particular capability is supported:
         if caps & QgsVectorDataProvider.DeleteFeatures:
-            res = enclosed_layer.dataProvider().deleteFeatures(deleted_id)
-        self.saving_a_layer(enclosed_layer, self.target_enclosed_filename) 
+            res = self.enclosed_layer.dataProvider().deleteFeatures(deleted_id)
+        self.connect_the_boundary(index_natural, index_manual, manual_id)
+        self.saving_a_layer(self.enclosed_layer, self.target_enclosed_filename) 
 
