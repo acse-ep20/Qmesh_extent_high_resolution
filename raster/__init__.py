@@ -20,4 +20,4 @@
 Package containing tools for creation of mesh-size-metric fields.
 '''
 
-from qmesh3.raster.meshMetricTools import *
+from Qmesh_extent_high_resolution.raster.meshMetricTools import *

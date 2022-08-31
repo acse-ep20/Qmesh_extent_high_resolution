@@ -15,4 +15,4 @@
 #    You should have received a copy of the GNU General Public License
 #    along with QMesh.  If not, see <http://www.gnu.org/licenses/>.
 
-from qmesh3.publish.publisher import Publisher
+from Qmesh_extent_high_resolution.publish.publisher import Publisher

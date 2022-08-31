@@ -15,5 +15,5 @@
 #    You should have received a copy of the GNU General Public License
 #    along with QMesh.  If not, see <http://www.gnu.org/licenses/>.
 
-from qmesh3.vector.shapefileTools import *
-from qmesh3.vector.primitiveShapes import *
+from Qmesh_extent_high_resolution.vector.shapefileTools import *
+from Qmesh_extent_high_resolution.vector.primitiveShapes import *

@@ -20,4 +20,4 @@
 Package containing librries of generic auxiliary routines and objects
 '''
 
-from qmesh3.lib.Trees import *
+from Qmesh_extent_high_resolution.lib.Trees import *
