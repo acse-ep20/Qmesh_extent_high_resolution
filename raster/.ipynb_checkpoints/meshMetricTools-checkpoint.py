@@ -1409,6 +1409,65 @@ class gradationToShapes(raster):
             except OSError: #in case given file does not exist
                 pass
 
+# acse-ep20
+    def calculateLinearGradationWithExtent(self, specific_extent, multiple_times):
+        def finding_indices_for_specific_extent(self, specific):
+            xi_min_specified, xi_max_specified, eta_min_specified, eta_max_specified = specific
+            xi_distance = xi_min_specified - self.xiMin  
+            eta_distance = eta_min_specified - self.etaMin
+            _, _, deltaXi, deltaEta = self.getRasterResolution()
+            xi_index_start = int(xi_distance // deltaXi - 1)
+            eta_index_start = int(eta_distance // deltaEta - 1)
+            xi_distance = xi_max_specified - self.xiMin
+            eta_distance = eta_max_specified - self.etaMin    
+            xi_index_end = int(xi_distance // deltaXi - 1)
+            eta_index_end = int(eta_distance // deltaEta - 1)
+            if xi_index_start < 0 or eta_index_start < 0:
+                msg = "specified extent out of normal extent range"
+                raise(Exception(msg)) 
+            return xi_index_start, xi_index_end, eta_index_start, eta_index_end
+        
+        """ Compute the linear gradation. """
+        from datetime import datetime
+        import os
+        LOG.info('Calculating linear gradation from shapes')
+        LOG.debug('    Gradating from '+str(self.metricAtShapes)+' to '+str(self.metricAwayFromShapes))
+        # Construct temporary file-names.
+        time = datetime.now()
+        rasterisedDistanceFile = '/tmp/rasterisedDistance'+time.isoformat()+'.nc'
+        # Calculate and read-in distance-function.
+        self.writeDistanceNetCDF(rasterisedDistanceFile)
+        logLevel = LOG.level
+        LOG.setLevel('WARNING')
+        # this can reset the coord ref system to None or ""
+        self.fromFile(rasterisedDistanceFile)
+        LOG.setLevel(logLevel)
+        print(finding_indices_for_specific_extent(self, specific_extent))
+        xi_index_start, xi_index_end, eta_index_start, eta_index_end = finding_indices_for_specific_extent(self, specific_extent)
+        import numpy as np
+        # Map distance to mesh-size-metric
+        for xi_index in range(self.numb_xiPoints):
+            for eta_index in range(self.numb_etaPoints):
+                if not self.variableData[eta_index, xi_index] ==  np.NAN:
+                    if not (eta_index <= eta_index_end and eta_index >= eta_index_start \
+                    and xi_index <= xi_index_end and xi_index >= xi_index_start):
+                        self.variableData[eta_index, xi_index] = max(self.variableData[eta_index, xi_index], self.metricAtShapes) * multiple_times      
+        meshSizeMetric = self.variableData*((float(self.metricAwayFromShapes) - float(self.metricAtShapes))/float(self.gradationDistance)) + \
+              float(self.metricAwayFromShapes) - (float(self.gradationDistance) + float(self.gradationStartDistance))*\
+              ((float(self.metricAwayFromShapes) - float(self.metricAtShapes))/float(self.gradationDistance))
+        meshSizeMetric = np.fmax(meshSizeMetric, self.metricAtShapes)
+        meshSizeMetric = np.fmin(meshSizeMetric, self.metricAwayFromShapes)
+
+        # force reset of coord system
+        self.coordRefSystem = self.coordsys
+        self.variableData = meshSizeMetric
+        # Clean-up temporary files.
+        filesForDeletion = [rasterisedDistanceFile, rasterisedDistanceFile+'.aux.xml']
+        for fileName in filesForDeletion:
+            try:
+                os.remove(fileName)
+            except OSError: # In case given file does not exist
+                pass
 
     def calculateLinearGradation(self):
         """ Compute the linear gradation. """

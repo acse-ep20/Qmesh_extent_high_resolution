@@ -132,7 +132,7 @@ class Contour(object):
     def check_unenclosed_feature_numbers(self):
 
         if len(self.unenclosed_features_list) > 1:
-            raise("more than one unenclosed shoreline(feature) is included")
+            raise(Exception("more than one unenclosed shoreline(feature) is included"))
 
 
     def check_whether_feature_all_in_extent(self, feature, extent):
@@ -304,7 +304,7 @@ class Contour(object):
         elif first_natural.compare(last):
             return 0, -1, manual_boundary_id
         else:
-            raise("Boundary is not closed!!")
+            raise(Exception("Boundary is not closed!!"))
             
     def connect_the_boundary(self, index_natural, index_manual, manual_id):
         """
@@ -317,7 +317,6 @@ class Contour(object):
             natural_boundary = feature
             geom = feature.geometry()
             if geom.wkbType() == QgsWkbTypes.MultiLineString:
-                print(1)
                 temp_lines = geom.asMultiPolyline()
                 first_natural = temp_lines[0][0]
                 last_natural = temp_lines[-1][-1]
@@ -352,7 +351,7 @@ class Contour(object):
         unenclosed_layer = self.unenclosed_layer
         manipulated_features = unenclosed_layer.getFeatures()
         if not self.check_whether_a_line_continous_in_one_extent(manipulated_features, extent):
-            raise("the part is discountinous in the extent")
+            raise(Exception("the part is discountinous in the extent"))
         # refresh the iterator
         manipulated_features = unenclosed_layer.getFeatures()
         for feature in manipulated_features:
