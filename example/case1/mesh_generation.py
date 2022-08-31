@@ -30,7 +30,7 @@ resolution, gradation, extent_of_interest, multiple_times):
     grad.setRasterResolution(resolution[0], resolution[1])
     grad.setGradationParameters(
     gradation[0], gradation[1], gradation[2], gradation[3])
-    grad.calculateLinearGradationWithExtent(extent, multiple_times)
+    grad.calculateLinearGradationWithExtent(extent_of_interest, multiple_times)
     # grad.calculateLinearGradation()
     domain = qmesh.mesh.Domain()
     domain.setGeometry(loopShapes, polygonShapes)
@@ -39,9 +39,6 @@ resolution, gradation, extent_of_interest, multiple_times):
     domain.gmsh(geoFilename=mesh_name+'.geo',
         fldFilename=mesh_name+'.fld',
         mshFilename=mesh_name+'.msh')
-    mesh = qmesh.mesh.Mesh()
-    mesh.readGmsh(mesh_name+'.msh', 'EPSG:'+str(EPSG))
-    mesh.writeShapefile(mesh_name)
 
 generate_mesh(mesh_name='mesh_generation_complex', # Name the generated files
 enclosed_name='target_enclosed.shp', # Enclosed shapefile’s name

@@ -1409,7 +1409,7 @@ class gradationToShapes(raster):
             except OSError: #in case given file does not exist
                 pass
 
-def calculateLinearGradationWithExtent(self, specific_extent, multiple_times):
+    def calculateLinearGradationWithExtent(self, specific_extent, multiple_times):
         def finding_indices_for_specific_extent(self, specific):
             xi_min_specified, xi_max_specified, eta_min_specified, eta_max_specified = specific
             xi_distance = xi_min_specified - self.xiMin  
