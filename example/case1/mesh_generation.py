@@ -5,9 +5,11 @@ unencloed_filename = 'complex_shoreline.shp'
 # output filename for check for self-intersection
 target_enclosed = "target_enclosed"
 target_unenclosed = "target_unenclosed"
-
+# intital a contour object to do the smoothing
 contour = qmesh.contour.Contour(enclosed_filename, unencloed_filename, target_enclosed, target_unenclosed)
 extent_of_interest = (-2.4846, -2.3198, 59.3140, 59.4364)
+# simplify the contour, points per group represents the partion size
+# overlapping points is recommended to be one small than the partition size
 contour.simplify_the_feature(extent_of_interest, points_per_group=20, overlapping_points=19, num_modes=1)
 
 def generate_mesh(mesh_name, enclosed_name, unenclosed_name, EPSG, extent,
@@ -51,4 +53,4 @@ resolution=(5000, 5000), # Set raster resolution, not the mesh resolution
 # The units are degree for the CRS 'EPSG:4326'
 gradation=(0.0008, 0.12, 0.3, 0.0), #min, max, gradation distance, buffer
 extent_of_interest = extent_of_interest, 
-multiple_times = 6) 
+multiple_times = 6) # multi-time presents the difference between inside the region of interest and outside the extent
