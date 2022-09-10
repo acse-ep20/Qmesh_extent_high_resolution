@@ -344,8 +344,18 @@ class Contour(object):
         self.enclosed_layer.dataProvider().changeGeometryValues({manual_id: QgsGeometry.fromPolylineXY(points)})
         
 
-        
-    def simplify_the_feature(self, extent, points_per_group=20, overlapping_points=19, num_modes=2):
+    def downsampling(self, a_line, multiple):
+        """
+        downsampling refers to downsample the points between the first and last points
+        """
+        first = [a_line[0]]
+        last = [a_line[-1]]
+        middle = a_line[1: -1]
+        new_middle = middle[::multiple]
+        new_line = first + new_middle + last
+        return new_line
+
+    def simplify_the_feature(self, extent, multiple_times, points_per_group=20, overlapping_points=19, num_modes=2):
         index_natural, index_manual, manual_id = self.check_connect_manual_boundary_to_natural_boundary()
         xiMin, xiMax, etaMin, etaMax = extent
         unenclosed_layer = self.unenclosed_layer
@@ -379,7 +389,9 @@ class Contour(object):
                         for point in line_middle:
                             line_middle_transformed.append(QgsPointXY(point[0], point[1]))
                         line_one_smoothed = self.smooth_a_part(line_one, points_per_group, overlapping_points, num_modes)
+                        line_one_smoothed = self.downsampling(line_one_smoothed, multiple_times)
                         line_end_smoothed = self.smooth_a_part(line_end, points_per_group, overlapping_points, num_modes)
+                        line_end_smoothed = self.downsampling(line_end_smoothed, multiple_times)
                         if feature.id() in self.enclosed_features_list:
                             line_end_smoothed[-1] = line_one_smoothed[0]
                         complete_line = line_one_smoothed + line_middle_transformed + line_end_smoothed
@@ -390,6 +402,7 @@ class Contour(object):
                             line_smoothed = self.smooth_a_part(points, points_per_group, overlapping_points, num_modes)
                             if feature.id() in self.enclosed_features_list:
                                 line_smoothed[-1] = line_smoothed[0] 
+                            line_smoothed = self.downsampling(line_smoothed, multiple_times)
                             smoothed_line = QgsGeometry.fromPolylineXY(line_smoothed)
                             unenclosed_layer.dataProvider().changeGeometryValues({feature.id(): smoothed_line})
 
